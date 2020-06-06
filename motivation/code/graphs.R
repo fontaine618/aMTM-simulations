@@ -3,7 +3,7 @@ library(egg)
 library(latex2exp)
 library(mixtools)
 # import res
-load("~/git/aMTM/simulations/motivation/results/samples.Rdata")
+load("~/Documents/aMTM-simulations/motivation/results/samples.Rdata")
 
 # colors
 ggplot <- function(...) ggplot2::ggplot(...) + scale_color_brewer(palette="Set1")
@@ -12,16 +12,15 @@ ggplot <- function(...) ggplot2::ggplot(...) + scale_color_brewer(palette="Set1"
 frm = function(x, i) format(round(x, i), nsmall=i)
 plot_sample = function(name, tit){
    ress = res[[name]]
-   df = data.frame(ress["X"], sel=as.factor(ress["sel"]))
+   df = data.frame(ress["X"])
+   df$sel = as.factor(ress["sel"]$sel)
    txt = paste("Acc. rate = ", frm(ress["results"]$results[10], 3),
                "\nMSJD = ", frm(ress["results"]$results[7], 3),
                "\nP(x\u2081>5) = ", frm(ress["results"]$results[1], 3),
                sep="")
-   plt = ggplot(df, aes(x=X.1, y=X.2)) + 
-      labs(y = TeX("$x_2$"), x = TeX("$x_1$"))+
-      geom_point(shape=19, alpha=0.2, show.legend = FALSE) + 
-      ggtitle(tit) +
-      annotate("text", x=30, y=20, label=txt, hjust=1, vjust=1)
+   plt = ggplot(df, aes(x=X.1, y=X.2)) +
+      geom_point(shape=19, alpha=0.2, show.legend = FALSE)
+   plt = plt + labs(y = TeX("$x_2$"), x = TeX("$x_1$")) + ggtitle(tit)
    if(!is.null(ress$sig)){
       K = dim(ress$sig)[3]
       for(k in seq(K)){
@@ -33,6 +32,8 @@ plot_sample = function(name, tit){
                          show.legend = FALSE)
       }
    }
+   plt = plt + annotate("label", x=30, y=20, label=txt, hjust=1, vjust=1, 
+                        fill=alpha(c("#EEEEEE"),0.8), label.size=0)
    plt = plt + xlim(-5, 30) + ylim(-5, 20) 
    return(plt)
 }
@@ -88,7 +89,7 @@ plt = ggarrange(
 )
 
 ggsave(
-   "~/git/aMTM/simulations/motivation/figs/samples.pdf",
+   "~/Documents/aMTM-simulations/motivation/figs/samples.pdf",
    plt,
    width=10, height=5.5, device=cairo_pdf
 )

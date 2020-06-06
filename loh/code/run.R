@@ -1,18 +1,22 @@
 library(batchtools)
 library(snow)
-setwd("~/git/aMTM/simulations/sensor_network")
+setwd("~/Documents/aMTM-simulations/loh")
 
 reg = makeExperimentRegistry(file.dir = NA, seed = 1)
 reg$cluster.functions = makeClusterFunctionsSocket(ncpus = 15)
 # add problem
 source('code/problems.R')
-addProblem(name = "mix_normal", data = data, fun = fun)
+addProblem(name="loh", data=list(target=logp, parms=parms), fun=fun)
+batchExport(reg=reg, export=list(
+    stats=stats, Sig_oracle=Sig_oracle,
+    Sig_constant=Sig_constant, Sig_scale=Sig_scale
+))
 # add algorithms
 source("code/algorithms.R")
-addAlgorithm(name = "aMTM", fun = aMTM.wrapper)
+addAlgorithm(name="aMTM", fun=aMTM.wrapper)
 # add experiments
 source("code/experiments.R")
-addExperiments(pdes, ades, repls = 5)
+addExperiments(pdes, ades, repls = 100)
 
 summarizeExperiments(by = c("problem", "algorithm"))
 
@@ -22,19 +26,4 @@ testJob(1, external = TRUE)
 submitJobs()
 getStatus()
 
-
-findErrors()
-getErrorMessages()
-
-loadResult(1)
-
-id = function(res) res$stats
-results = unwrap(reduceResultsDataTable(fun = id))
-
-pars = unwrap(getJobPars())
-tab = ijoin(pars, results)
-class(tab)
-head(tab)
-
-
-tab[,list(mean.act = mean(act)),by=(K)]
+save(reg, file="./results/batchtools/reg.Rdata")

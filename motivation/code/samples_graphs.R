@@ -1,5 +1,5 @@
 # Setup
-setwd("~/git/aMTM/simulations/motivation")
+setwd("~/Documents/aMTM-simulations/motivation")
 source('code/problems.R')
 N = 1e4
 d = 2
@@ -118,7 +118,7 @@ res[["MTM"]] = list(X=X, results=results, sig=mcmc$Sig, sel=mcmc$sel, lam=mcmc$l
 
 # aMTM
 set.seed(1)
-scales = list(400, 36, 36)
+scales = list(400, 50, 50)
 K = length(scales)
 adapt = 3
 x0 = rnorm(d, 5, 10)
@@ -142,4 +142,4 @@ res[["aMTM"]] = list(X=X, results=results, sig=mcmc$Sig, sel=mcmc$sel, lam=mcmc$
 
 
 # save results
-save(res, file="~/git/aMTM/simulations/motivation/results/samples.Rdata")
+save(res, file="~/Documents/aMTM-simulations/motivation/results/samples.Rdata")

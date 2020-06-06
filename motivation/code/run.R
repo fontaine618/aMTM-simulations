@@ -1,6 +1,6 @@
 library(batchtools)
 library(snow)
-setwd("~/git/aMTM/simulations/motivation")
+setwd("~/Documents/aMTM-simulations/motivation")
 
 reg = makeExperimentRegistry(
    file.dir = NA, 
@@ -35,5 +35,5 @@ submitJobs()
 getStatus()
 
 
-save(reg, file="~/git/aMTM/simulations/motivation/results/batchtools/reg.Rdata")
+save(reg, file="~/Documents/aMTM-simulations/motivation/results/batchtools/reg.Rdata")
 

@@ -1,7 +1,7 @@
 library(batchtools)
 library(xtable)
 # load reg
-load("~/git/aMTM/simulations/motivation/results/batchtools/reg.Rdata")
+load("~/Documents/aMTM-simulations/motivation/results/batchtools/reg.Rdata")
 # check errors
 findErrors(reg=reg)
 getErrorMessages(reg=reg)
