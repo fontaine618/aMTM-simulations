@@ -3,15 +3,18 @@
 
 # dimension
 d = 5
-# lo-gdensity
+# log-density
 logpi = function(x, p) apply(x,1,function(x) {
-   -0.5 * (
-      x[1]^2/(2*p$a1^2) +
-         (p$B1*x[1]^2+x[2])^2 +
+   for(i in seq(20)){ # artificially increase computing time
+      eval = -0.5 * (
+         x[1]^2 / p$a1^2 +
+         ( x[2] - p$B1 * x[1]^2 )^2 +
          x[3]^2 +
-         x[4]^2/(2*p$a2^2) +
-         (p$B2*x[4]^2+x[5])^2
-   )
+         x[4]^2 / p$a2^2 +
+         ( x[5] - p$B2 * x[4]^2 )^2
+      )
+   }
+   return(eval)
 })
 parms = list(a1=1, a2=1, B1=3, B2=1)
 
@@ -28,20 +31,20 @@ iid = function(n, p){
    return(x)
 }
 set.seed(1)
-sample = iid(1000000, p)
+sample = iid(1000000, parms)
 
 # statistics to compute
 regions = function(x){
-   reg1 = (x[, 4]>=0) * (x[, 5]>=5)
-   reg2 = (x[, 4]<0) * (x[, 5]>=5)
-   reg3 = (x[, 1]>=0) * (x[, 2]>=10)
-   reg4 = (x[, 1]<0) * (x[, 2]>=10)
+   reg1 = (x[, 4]>=0) * (x[, 5]>=3)
+   reg2 = (x[, 4]<0) * (x[, 5]>=3)
+   reg3 = (x[, 1]>=0) * (x[, 2]>=3)
+   reg4 = (x[, 1]<0) * (x[, 2]>=3)
    reg5 = (1-reg1)*(1-reg2)*(1-reg3)*(1-reg4)
-   regions = rep(1, nrow(x))
-   regions[reg1==1] = 2
-   regions[reg2==1] = 3
-   regions[reg3==1] = 4
-   regions[reg4==1] = 5
+   regions = rep(5, nrow(x))
+   regions[reg1==1] = 1
+   regions[reg2==1] = 2
+   regions[reg3==1] = 3
+   regions[reg4==1] = 4
    return(list(regions=regions, weights=c(mean(reg1), mean(reg2), mean(reg3), mean(reg4), mean(reg5))))
 }
 out = regions(sample)
@@ -50,12 +53,13 @@ oracle_cov = cov(sample)
 
 stats = function(X){
    # expects X a coda::mcmc object
-   stat = aMTM::stats.aMTM(X)
+   stat = aMTM::stats.aMTM(X, cov=oracle_cov)
    ess = stat[["ess"]]
-   out = regions(X)
-   weights = out$weights
+   msjd = stat[["msjd"]]
+   weights = regions(as.matrix(X))$weights
    tv = sum(abs(weights-iid_weights))
    results=list(
+      msjd=msjd,
       ess=ess,
       tv=tv
    )

@@ -3,10 +3,10 @@ library(snow)
 setwd("~/Documents/aMTM-simulations/banana")
 
 reg = makeExperimentRegistry(
-   file.dir = NA, 
-   seed = 1
+   file.dir=NA, 
+   seed=1
 )
-reg$cluster.functions = makeClusterFunctionsSocket(ncpus = 15)
+reg$cluster.functions = makeClusterFunctionsSocket(ncpus=10)
 # add problem
 source('code/problems.R')
 addProblem(name="banana", data=data, fun=fun)
@@ -19,7 +19,7 @@ source("code/algorithms.R")
 addAlgorithm(name = "aMTM", fun = aMTM.wrapper)
 # add experiments
 source("code/experiments.R")
-addExperiments(pdes, ades, repls = 100)
+addExperiments(pdes, ades, repls=100)
 
 summarizeExperiments(by = c("problem", "algorithm"))
 
@@ -32,7 +32,6 @@ summarizeExperiments(by = c("problem", "algorithm"))
 
 submitJobs()
 getStatus()
-
 
 save(reg, file="~/Documents/aMTM-simulations/banana/results/batchtools/reg.Rdata")
 

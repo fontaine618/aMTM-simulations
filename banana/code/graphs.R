@@ -1,97 +1,82 @@
 library(ggplot2)
-library(egg)
+library(ggpubr)
 library(latex2exp)
-library(mixtools)
-# import res
-load("~/Documents/aMTM-simulations/motivation/results/samples.Rdata")
 
 # colors
 ggplot <- function(...) ggplot2::ggplot(...) + scale_color_brewer(palette="Set1")
 
-# return plot
-frm = function(x, i) format(round(x, i), nsmall=i)
-plot_sample = function(name, tit){
-   ress = res[[name]]
-   df = data.frame(ress["X"])
-   df$sel = as.factor(ress["sel"]$sel)
-   txt = paste("Acc. rate = ", frm(ress["results"]$results[10], 3),
-               "\nMSJD = ", frm(ress["results"]$results[7], 3),
-               "\nP(x\u2081>5) = ", frm(ress["results"]$results[1], 3),
-               sep="")
-   plt = ggplot(df, aes(x=X.1, y=X.2)) +
-      geom_point(shape=19, alpha=0.2, show.legend = FALSE)
-   plt = plt + labs(y = TeX("$x_2$"), x = TeX("$x_1$")) + ggtitle(tit)
-   if(!is.null(ress$sig)){
-      K = dim(ress$sig)[3]
-      for(k in seq(K)){
-         ell = ellipse(c(10, 5), ress$sig[, , k] * ress$lam[k], alpha=0.5, draw=FALSE)
-         ell = data.frame(ell[1:249, ], ell[2:250, ], sel=as.factor(k))
-         plt = plt + 
-            geom_segment(data=ell, 
-                         aes(x=X1, y=X2, xend=X1.1, yend=X2.1), 
-                         show.legend = FALSE)
-      }
+# load aggregated results
+means = read.csv("~/Documents/aMTM-simulations/banana/results/means.csv")
+ses = read.csv("~/Documents/aMTM-simulations/banana/results/ses.csv")
+
+# data
+algos = list("None", "AM", "ASWAM", "RAM")
+cols = c("None"="#E69F00", "AM"="#56B4E9", "ASWAM"="#009E73", "RAM"="#F0E442")
+which = c(0, 1, 2, 3)
+Ks = c(1:10)
+
+# plot functions
+plot_metric = function(metric, displayed=metric){
+   plt = ggplot() + ggtitle(displayed) + labs(y="") + scale_x_continuous(
+      "K", 
+      breaks=c(2, 4, 6, 8, 10), 
+      labels=c(2, 4, 6, 8, 10), 
+      limits=c(1, 10)
+   ) 
+   for(i in which){
+      m = means[[metric]][means$adapt==i]
+      s = ses[[metric]][means$adapt==i]
+      df = data.frame(K=Ks, m=m, l=m-s, u=m+s, Adaptation=algos[[i+1]])
+      plt = plt + geom_ribbon(
+            data=df, 
+            aes(ymin=l, ymax=u, x=K, fill=Adaptation),
+            alpha=0.2
+         ) + geom_line(
+            data=df,
+            aes(x=K, y=m, colour=Adaptation)
+         ) + scale_colour_manual(values=cols) + scale_fill_manual(values=cols) 
+      
    }
-   plt = plt + annotate("label", x=30, y=20, label=txt, hjust=1, vjust=1, 
-                        fill=alpha(c("#EEEEEE"),0.8), label.size=0)
-   plt = plt + xlim(-5, 30) + ylim(-5, 20) 
+   plt
    return(plt)
 }
 
-iid = plot_sample("IID", "(a) I.I.D.") + theme(
+empty_plot = ggplot() + theme_minimal() 
+
+no_xticks = theme(
    axis.title.x=element_blank(), 
    axis.text.x=element_blank(),
    axis.ticks.x=element_blank()
 )
 
-metropolis = plot_sample("Metropolis", "(b) Metropolis") + theme(
-   axis.title.x=element_blank(), 
-   axis.text.x=element_blank(),
-   axis.ticks.x=element_blank(),
-   axis.title.y=element_blank(), 
-   axis.text.y=element_blank(),
-   axis.ticks.y=element_blank()
-)
 
-am1 = plot_sample("AM (one mode)", "(c) AM, one mode") + theme(
-   axis.title.x=element_blank(), 
-   axis.text.x=element_blank(),
-   axis.ticks.x=element_blank(),
-   axis.title.y=element_blank(), 
-   axis.text.y=element_blank(),
-   axis.ticks.y=element_blank()
-)
-
-am2 = plot_sample("AM (two modes)", "(d) AM, two modes")
-
-mtm = plot_sample("MTM", "(e) MTM") + theme(
-   axis.title.y=element_blank(), 
-   axis.text.y=element_blank(),
-   axis.ticks.y=element_blank()
-)
-
-amtm = plot_sample("aMTM", "(f) aMTM") + theme(
-   axis.title.y=element_blank(), 
-   axis.text.y=element_blank(),
-   axis.ticks.y=element_blank()
+# create all plots
+plots = list(
+   plot_metric("tv", "(a) TV Distance"),
+   plot_metric("ess", "(b) mESS"),
+   plot_metric("msjd", "(c) MSJD"),
+   plot_metric("time.elapsed", "(d) CPU"),
+   plot_metric("esscpu.elapsed", "(e) mESS/CPU"),
+   plot_metric("msjdcpu.elapsed", "(f) MSJD/CPU"),
+   empty_plot,
+   plot_metric("essnbeval", "(g) mESS/NbEval"),
+   plot_metric("msjdnbeval", "(h) MSJD/NbEval")
 )
 
 
-
-plt = ggarrange(
-   iid,
-   metropolis,
-   am1,
-   am2,
-   mtm, 
-   amtm,
-   nrow=2
+# merge all plots
+plts = ggpubr::ggarrange(
+   plotlist=plots,
+   nrow=3, ncol=3,
+   common.legend=TRUE, legend="bottom",
+   align="hv"
 )
 
+# save plot
 ggsave(
-   "~/Documents/aMTM-simulations/motivation/figs/samples.pdf",
-   plt,
-   width=10, height=5.5, device=cairo_pdf
+   "~/Documents/aMTM-simulations/banana/figs/banana_results.pdf",
+   plts,
+   width=10, height=7, device=cairo_pdf
 )
 
-   
+
