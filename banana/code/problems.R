@@ -45,7 +45,7 @@ regions = function(x){
    regions[reg2==1] = 2
    regions[reg3==1] = 3
    regions[reg4==1] = 4
-   return(list(regions=regions, weights=c(mean(reg1), mean(reg2), mean(reg3), mean(reg4), mean(reg5))))
+   return(list(regions=regions, weights=table(regions)/nrow(x)))
 }
 out = regions(sample)
 iid_weights = out$weights
