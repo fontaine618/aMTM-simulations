@@ -34,8 +34,9 @@ plot_metric = function(metric, displayed=metric){
          ) + geom_line(
             data=df,
             aes(x=K, y=m, colour=Adaptation)
-         ) + scale_colour_manual(values=cols) + scale_fill_manual(values=cols) 
-      
+         ) + scale_colour_manual(values=cols) + 
+         scale_fill_manual(values=cols) + 
+         scale_y_continuous(expand = c(0, 0), limits = c(0, NA))
    }
    plt
    return(plt)
@@ -76,7 +77,7 @@ plts = ggpubr::ggarrange(
 ggsave(
    "~/Documents/aMTM-simulations/banana/figs/banana_results.pdf",
    plts,
-   width=10, height=7, device=cairo_pdf
+   width=8, height=6, device=cairo_pdf
 )
 
 

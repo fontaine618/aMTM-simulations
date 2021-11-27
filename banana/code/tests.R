@@ -1,41 +1,47 @@
 library("ggplot2")
 library("GGally")
 
+#############################################
+# Definition of the target density
+
+# dimension
+d = 5
+# log-density
 logpi = function(x, p) apply(x,1,function(x) {
-    -0.5 * (
-        x[1]^2/(p$a1^2) +
-        (x[2]-p$B1*x[1]^2)^2 +
-        x[3]^2 +
-        x[4]^2/(p$a2^2) +
-        (x[5]-p$B2*x[4]^2)^2
-    )
+    for(i in seq(20)){ # artificially increase computing time
+        eval = -0.5 * (
+            x[1]^2 / p$a1^2 +
+                ( x[2] - p$B1 * x[1]^2 )^2 +
+                x[3]^2 +
+                x[4]^2 / p$a2^2 +
+                ( x[5] - p$B2 * x[4]^2 )^2
+        )
+    }
+    return(eval)
 })
+parms = list(a1=1, a2=1, B1=3, B2=1)
 
-iid = function(n, p){
-    x = matrix(rnorm(n*5), n, 5)
-    x[, 1] = x[, 1] * p$a1
-    x[, 2] = x[, 2] + p$B1 * (x[, 1]^2)
-    x[, 4] = x[, 4] * p$a2
-    x[, 5] = x[, 5] + p$B2 * (x[, 4]^2)
-    return(x)
-}
-
-
-parms = list(a1=1, a2=1, B1=5, B2=1)
-
-
-sample = iid(1e5, parms)
+# iid = function(n, p){
+#     x = matrix(rnorm(n*5), n, 5)
+#     x[, 1] = x[, 1] * p$a1
+#     x[, 2] = x[, 2] + p$B1 * (x[, 1]^2)
+#     x[, 4] = x[, 4] * p$a2
+#     x[, 5] = x[, 5] + p$B2 * (x[, 4]^2)
+#     return(x)
+# }
+# 
+# sample = iid(1e5, parms)
 
 
 #
+set.seed(1)
 N = 1e5
-d = 5
-K = 3
+K = 5
 x0 = rnorm(d, 0, 1)
 sig0 = array(0, dim=c(d,d,K))
-scales = 10^seq(2, 0, length.out=K)
+scales = 10^seq(-2, 2, length.out=K)
 if (K==1) scales = c(1.)
-for(k in seq(K)) sig0 [, , k] = diag(c(1, 4, 1, 1, 4)) * scales[k]
+for(k in seq(K)) sig0 [, , k] = diag(c(1, 3, 1, 1, 3)) * scales[k]
 
 mcmc = aMTM::aMTM(
     target=logpi, 
@@ -44,16 +50,20 @@ mcmc = aMTM::aMTM(
     K=K,
     sig0=sig0,
     parms=parms,
-    adapt=3,
-    gamma=0.7,
+    proposal=2,
+    adapt=2,
+    gamma=0.5,
     weight=0,
-    local=F,
-    global=F, 
-    accrate=0.2
+    accrate=0.2,
+    burnin=1/2,
+    local=T
 )
-sample = mcmc$X
+
+# final covariances
+round(mcmc$Sig,1)
 
 # plot
+sample = mcmc$X
 colors = regions(sample)$regions
 data = data.frame(sample, Region=colors)[seq(1, N, 100), ]
 data$Region = as.factor(data$Region)

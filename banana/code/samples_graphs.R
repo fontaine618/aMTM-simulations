@@ -9,6 +9,7 @@ sample = iid(N, parms)
 colors = regions(sample)$regions
 
 # plot
+library(latex2exp)
 library("ggplot2")
 library("GGally")
 data = data.frame(sample, Region=colors)
@@ -25,7 +26,9 @@ g = ggpairs(
     upper=list(continuous=lowerFn, mapping=aes(colour=Region)),
     diag="blank",
     lower=list(continuous=lowerFn, mapping=aes(colour=Region)),
-    legend=6
+    legend=6,
+    columnLabels=c("x[1]", "x[2]", "x[3]", "x[4]", "x[5]"),
+    labeller = "label_parsed"
 )
 g = g + scale_colour_manual(values=cbPalette)
 
